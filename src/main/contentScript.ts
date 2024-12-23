@@ -36,7 +36,6 @@ function onKeyDown(event: KeyboardEvent) {
     const state = view.state;
     const from = state.selection.main.from;
     const to = state.selection.main.to;
-    const head = state.selection.main.head;
     if ((from == to) || (to - from >= MAX_LENGTH_SELECTION)) return;
     window.dispatchEvent(
       new CustomEvent('copilot:tool:find-similar', {
