@@ -2,7 +2,6 @@
 
 import { getContentBeforeCursor, getCmView, updateSuggestionOnCursorUpdate, getContentAfterCursor } from './helpers';
 import { onAcceptPartialSuggestion, onAcceptSuggestion, onReplaceContent } from './eventHandlers';
-import { onFindSimilar } from '../iso/toolbar';
 import { MAX_LENGTH_AFTER_CURSOR, MAX_LENGTH_BEFORE_CURSOR, MAX_LENGTH_SELECTION } from '../constants';
 
 let autoCompletionEnabled = false; // Flag to control Auto-Completion
@@ -33,7 +32,19 @@ function onKeyDown(event: KeyboardEvent) {
   } else if (event.metaKey && event.ctrlKey && event.key === 'c') {
     toggleAutoCompletion();
   } else if (event.metaKey && event.ctrlKey && event.key === 'r') {
-    triggerFindSimilar();
+    var view = getCmView();
+    const state = view.state;
+    const from = state.selection.main.from;
+    const to = state.selection.main.to;
+    const head = state.selection.main.head;
+    if ((from == to) || (to - from >= MAX_LENGTH_SELECTION)) return;
+    window.dispatchEvent(
+      new CustomEvent('copilot:tool:find-similar', {
+        detail: {
+          selection: state.sliceDoc(from, to),
+        },
+      })
+    );
   }
 }
 
@@ -88,19 +99,9 @@ function onCursorUpdate() {
 
 function toggleAutoCompletion() {
   autoCompletionEnabled = !autoCompletionEnabled;
-  console.log(`Auto-Completion ${autoCompletionEnabled ? 'enabled' : 'disabled'}`);
   if (autoCompletionEnabled) {
     onCursorUpdate();
   }
-}
-
-function triggerFindSimilar() {
-  const view = getCmView();
-  const state = view.state;
-  const from = state.selection.main.from;
-  const to = state.selection.main.to;
-  const selection = state.sliceDoc(from, to);
-  onFindSimilar(selection);
 }
 
 window.addEventListener('copilot:editor:replace', onReplaceContent as EventListener);

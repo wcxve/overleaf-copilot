@@ -2,7 +2,7 @@
 
 import './contentScript.css';
 
-import { showToolbar } from './toolbar';
+import { onFindSimilar, showToolbar } from './toolbar';
 import { Options, TextContent } from '../types';
 import { Suggestion } from '../common/suggestion';
 import { getOptions } from '../utils/helper';
@@ -55,8 +55,13 @@ function onCursorUpdate(_: Event) {
   toolbarActionAbortController?.abort();
 }
 
+async function triggerFindSimilar(event: CustomEvent<{ selection: string; }>) {
+  await onFindSimilar(event.detail.selection);
+}
+
 window.addEventListener('copilot:editor:update', onEditorUpdate as any as EventListener);
 window.addEventListener('copilot:editor:select', onEditorSelect as any as EventListener);
 window.addEventListener('copilot:cursor:update', onCursorUpdate);
+window.addEventListener('copilot:tool:find-similar', triggerFindSimilar as any as EventListener);
 chrome.storage.onChanged.addListener(onOptionsUpdate);
 onOptionsUpdate();
