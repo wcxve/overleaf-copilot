@@ -2,7 +2,10 @@
 
 import { getContentBeforeCursor, getCmView, updateSuggestionOnCursorUpdate, getContentAfterCursor } from './helpers';
 import { onAcceptPartialSuggestion, onAcceptSuggestion, onReplaceContent } from './eventHandlers';
+import { onFindSimilar } from '../iso/toolbar';
 import { MAX_LENGTH_AFTER_CURSOR, MAX_LENGTH_BEFORE_CURSOR, MAX_LENGTH_SELECTION } from '../constants';
+
+let autoCompletionEnabled = false; // Flag to control Auto-Completion
 
 function debounce<T extends () => void>(func: T): () => void {
   let timeout: NodeJS.Timeout | null;
@@ -27,6 +30,10 @@ function onKeyDown(event: KeyboardEvent) {
     onAcceptSuggestion();
   } else if ((event.metaKey || event.ctrlKey) && event.key == 'ArrowRight') {
     onAcceptPartialSuggestion();
+  } else if (event.metaKey && event.ctrlKey && event.key === 'c') {
+    toggleAutoCompletion();
+  } else if (event.metaKey && event.ctrlKey && event.key === 'r') {
+    triggerFindSimilar();
   }
 }
 
@@ -59,7 +66,10 @@ function onCursorUpdate() {
     const line = state.doc.lineAt(head);
     const col = head - line.from;
     const newLine = line.text.length == 0;
-    if (newLine || (col == line.text.length && line.text[col - 1] == ' ')) {
+    if (
+      autoCompletionEnabled
+      && (newLine || (col == line.text.length && line.text[col - 1] == ' '))
+    ) {
       window.dispatchEvent(
         new CustomEvent('copilot:editor:update', {
           detail: {
@@ -76,6 +86,22 @@ function onCursorUpdate() {
   }
 }
 
+function toggleAutoCompletion() {
+  autoCompletionEnabled = !autoCompletionEnabled;
+  console.log(`Auto-Completion ${autoCompletionEnabled ? 'enabled' : 'disabled'}`);
+  if (autoCompletionEnabled) {
+    onCursorUpdate();
+  }
+}
+
+function triggerFindSimilar() {
+  const view = getCmView();
+  const state = view.state;
+  const from = state.selection.main.from;
+  const to = state.selection.main.to;
+  const selection = state.sliceDoc(from, to);
+  onFindSimilar(selection);
+}
 
 window.addEventListener('copilot:editor:replace', onReplaceContent as EventListener);
 window.addEventListener('cursor:editor:update', debounce(onCursorUpdate));

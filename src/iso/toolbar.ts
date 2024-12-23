@@ -69,7 +69,7 @@ export function showToolbar(data: EditorSelectionData, options: Options, signal:
   }), toolbar);
 }
 
-async function onFindSimilar(selection: string) {
+export async function onFindSimilar(selection: string) {
   const rightContainer = document.querySelector('.ide-react-panel[data-panel-id="panel-pdf"]');
   if (!rightContainer) return;
 
