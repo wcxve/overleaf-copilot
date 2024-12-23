@@ -1,4 +1,4 @@
-import { LOCAL_STORAGE_KEY_API_KEY, LOCAL_STORAGE_KEY_BASE_URL, LOCAL_STORAGE_KEY_MODEL, LOCAL_STORAGE_KEY_OPTIONS } from "../constants";
+import { LOCAL_STORAGE_KEY_API_KEY, LOCAL_STORAGE_KEY_BASE_URL, LOCAL_STORAGE_KEY_MODEL, LOCAL_STORAGE_KEY_OPTIONS, MAX_LENGTH_BEFORE_CURSOR, MAX_LENGTH_AFTER_CURSOR, MAX_LENGTH_SELECTION } from "../constants";
 import { Options, TextContent } from "../types";
 
 const Prefixes = ["```latex\n", "```latex", "```"];
@@ -56,11 +56,34 @@ export function getQueryParams() {
 
 export function renderPrompt(prompt: string, content: TextContent) {
   return prompt.replace(PromptVariableRegex, (_, variable_name, __, start, end) => {
-    const variable = content[variable_name as keyof TextContent];
+    let variable = content[variable_name as keyof TextContent];
+    if (variable_name === 'selection') {
+      variable = variable.slice(0, MAX_LENGTH_SELECTION);
+    } else if (variable_name === 'before') {
+      variable = variable.slice(-MAX_LENGTH_BEFORE_CURSOR);
+    } else if (variable_name === 'after') {
+      variable = variable.slice(0, MAX_LENGTH_AFTER_CURSOR);
+    }
+    const sentences = variable.split(/\.\s+/g).filter(Boolean);
     let startIdx = parseInt(start);
     if (isNaN(startIdx)) startIdx = 0;
-    let endIdex = parseInt(end);
-    if (isNaN(endIdex)) endIdex = variable.length;
-    return variable.slice(startIdx, endIdex);
+    let endIdx = parseInt(end);
+    if (isNaN(endIdx)) endIdx = sentences.length;
+    const slicedSentences = sentences.slice(startIdx, endIdx);
+    const n = slicedSentences.length;
+
+    if (n === 0) {
+      return variable;
+    }
+
+    const startIdx2 = variable.indexOf(slicedSentences[0]);
+    const lastSlicedSentence = slicedSentences[n - 1];
+
+    if (lastSlicedSentence === sentences[sentences.length - 1]) {
+      return variable.slice(startIdx2);
+    } else {
+      const endIdx2 = variable.indexOf(sentences[n]);
+      return variable.slice(startIdx2, endIdx2);
+    }
   });
 }
