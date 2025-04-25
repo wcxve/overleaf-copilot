@@ -91,9 +91,9 @@ const OptionsForm = () => {
           </div>
           <div class="pure-control-group">
             <label for="field-suggestion-max-output-token">Max output token</label>
-            <input class="pure-input-1-4" type="number" id="field-suggestion-max-output-token" placeholder="100" value={state.suggestionMaxOutputToken}
+            <input class="pure-input-1-4" type="number" id="field-suggestion-max-output-token" placeholder="1000" value={state.suggestionMaxOutputToken}
               onChange={(e) => onOptionsChange({ ...state, suggestionMaxOutputToken: parseInt(e.currentTarget.value) })} />
-            <span class="pure-form-message-inline pure-u-1-3">Set the maximum number of tokens generated per suggestion. Default is 100.</span>
+            <span class="pure-form-message-inline pure-u-1-3">Set the maximum number of tokens generated per suggestion. Default is 1000.</span>
           </div>
           <div class="pure-control-group">
             <label for="field-suggestion-prompt">Prompt</label>
